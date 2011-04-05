@@ -3,7 +3,7 @@
 // program by Rob Faludi (http://faludi.com) with additional code from various public examples
 // Botanicalls is a project with Kati London, Rob Faludi and Kate Hartman
 
-#define VERSION "3.00a17" // use with 2.1 leaf board hardware
+#define VERSION "3.00a18" // use with 2.1 leaf board hardware
 
 // Your Token to Tweet (get it from http://arduino-tweet.appspot.com/)
 #define TOKEN "14052394-9gYsPnSXTyw0RFVNKMFU14GwNY9RiJXw6Xt3moTkQ"  
@@ -35,7 +35,7 @@
 
 #define MOIST 425 // minimum level of satisfactory moisture
 #define DRY 300  // maximum level of tolerable dryness
-#define HYSTERESIS 25 // stabalization value http://en.wikipedia.org/wiki/Hysteresis
+#define HYSTERESIS 25 // stabilization value http://en.wikipedia.org/wiki/Hysteresis
 #define SOAKED 575 // minimum desired level after watering
 #define WATERING_CRITERIA 115 // minimum change in value that indicates watering
 
@@ -48,6 +48,7 @@
 
 int moistValues[MOIST_SAMPLES];
 
+// names for the input and output pins
 #define LEDPIN 13 // generic status LED
 #define MOISTPIN 0 // moisture input is on analog pin 0
 #define PROBEPOWER 8 // feeds power to the moisture probes
@@ -133,14 +134,10 @@ void setup()  {
 void loop()       // main loop of the program     
 {
   moistureCheck(); // check to see if moisture levels require Twittering out
-  wateringCheck(); // check to see if a watering event has occured to report it
+  wateringCheck(); // check to see if a watering event has occurred to report it
   buttonCheck(); // check to see if the debugging button is pressed
   analogWrite(COMMLED,0); // douse comm light if it was on
   if (millis() % 5*60000 == 0) EthernetDHCP.maintain(); // maintain DHCP connection no more than once every 5 minutes
 }
-
-
-
-
 
 
