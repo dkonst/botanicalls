@@ -2,13 +2,16 @@
 // http://www.botanicalls.com
 // program by Rob Faludi (http://faludi.com) with additional code from various public examples
 // Botanicalls is a project with Kati London, Rob Faludi and Kate Hartman
-// YOU MUST USE Arduino 0018: http://www.arduino.cc/en/Main/Software
 
-#define VERSION "3.00a14" // use with 2.1 leaf board hardware
+#define VERSION "3.00a17" // use with 2.1 leaf board hardware
 
 // Your Token to Tweet (get it from http://arduino-tweet.appspot.com/)
 #define TOKEN "14052394-9gYsPnSXTyw0RFVNKMFU14GwNY9RiJXw6Xt3moTkQ"  
 // (the @botanicallstest account token is "14052394-9gYsPnSXTyw0RFVNKMFU14GwNY9RiJXw6Xt3moTkQ")
+
+#if defined(ARDUINO) && ARDUINO > 18
+#include <SPI.h> // library to support SPI bus interactions with Wiznet module in Arduino versions 19 and above
+#endif
 
 #include <Ethernet.h> // libraries to interact with Wiznet Ethernet
 #include <EthernetDHCP.h> // library to automatically request an IP address http://www.arduino.cc/playground/Code/TwitterLibrary#Download
@@ -25,8 +28,14 @@
 #define OVER_WATERED "You over watered me."
 #define UNDER_WATERED "You didn't water me enough."
 
+//tracks the state to avoid erroneously repeated tweets
+#define URGENT_SENT 3
+#define WATER_SENT 2
+#define MOISTURE_OK 1
+
 #define MOIST 425 // minimum level of satisfactory moisture
 #define DRY 300  // maximum level of tolerable dryness
+#define HYSTERESIS 25 // stabalization value http://en.wikipedia.org/wiki/Hysteresis
 #define SOAKED 575 // minimum desired level after watering
 #define WATERING_CRITERIA 115 // minimum change in value that indicates watering
 
@@ -65,7 +74,7 @@ void setup()  {
   serial = getSerial(); // create or obtain a serial number from EEPROM memory
   // Ethernet Shield Settings
   byte mac[] = {  
-    0x02, 0xBC, 0xA1, 0x15, serial >> 8, serial & 0xFF             }; // create a private MAC address using serial number
+    0x02, 0xBC, 0xA1, 0x15, serial >> 8, serial & 0xFF               }; // create a private MAC address using serial number
   pinMode(LEDPIN, OUTPUT);
   pinMode(PROBEPOWER, OUTPUT);
   pinMode(MOISTLED, OUTPUT);
@@ -84,7 +93,12 @@ void setup()  {
   Serial.println("");   // begin printing to debug output
   Serial.print("Botanicalls v");
   Serial.println(VERSION);
-
+  Serial.print("mac: ");
+  for (int i=0; i< 6; i++) {
+    Serial.print(mac[i],HEX);
+    if(i<5) Serial.print(":");
+  }
+  Serial.println("");
   // start Ethernet
   counter = getCounter();
   serial = getSerial();
@@ -94,11 +108,6 @@ void setup()  {
   if(digitalRead(SWITCH)==LOW) { 
     Serial.print("token: ");
     Serial.println(TOKEN);
-    Serial.print("mac: ");
-    for (int i=0; i< 6; i++) {
-      Serial.print(mac[i],HEX);
-      if(i<5) Serial.print(":");
-    }
     Serial.println("");
     Serial.print("ip: ");
     Serial.println(ip_to_str(EthernetDHCP.ipAddress()));
@@ -129,6 +138,7 @@ void loop()       // main loop of the program
   analogWrite(COMMLED,0); // douse comm light if it was on
   if (millis() % 5*60000 == 0) EthernetDHCP.maintain(); // maintain DHCP connection no more than once every 5 minutes
 }
+
 
 
 

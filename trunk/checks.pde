@@ -1,6 +1,7 @@
 //function for checking soil moisture against threshold
 void moistureCheck() {
   static int counter = 1;//init static counter
+    static int state = MOISTURE_OK; // tracks which messages have been sent
   int moistAverage = 0; // init soil moisture average
   if((millis() - lastMoistTime) / 1000 > (MOIST_SAMPLE_INTERVAL / MOIST_SAMPLES)) {
     for(int i = MOIST_SAMPLES - 1; i > 0; i--) {
@@ -31,15 +32,20 @@ void moistureCheck() {
 
 
     ///return values
-    if ((moistAverage < DRY)  &&  (lastMoistAvg >= DRY)  &&  (millis() > (lastTwitterTime + TWITTER_INTERVAL)) ) {
+    if ((moistAverage < DRY)  &&  (lastMoistAvg >= DRY)  && state < URGENT_SENT && (millis() > (lastTwitterTime + TWITTER_INTERVAL)) ) {
       Serial.println("URGENT tweet");
       posttweet(URGENT_WATER);   // announce to Twitter
+      state = URGENT_SENT; // remember this message
     }
-    else if  ((moistAverage < MOIST)  &&  (lastMoistAvg >= MOIST)  &&  (millis() > (lastTwitterTime + TWITTER_INTERVAL)) ) {
+    else if  ((moistAverage < MOIST)  &&  (lastMoistAvg >= MOIST)   && state < WATER_SENT &&  (millis() > (lastTwitterTime + TWITTER_INTERVAL)) ) {
       Serial.println("WATER tweet");
       posttweet(WATER);   // announce to Twitter
+      state = WATER_SENT; // remember this message
     }
-    lastMoistAvg = moistAverage; // record this moisture average for comparision the next time this function is called
+    else if (moistAverage > MOIST + HYSTERESIS) {
+      state = MOISTURE_OK; // reset to messages not yet sent state
+    }
+    lastMoistAvg = moistAverage; // record this moisture average for comparison the next time this function is called
     moistLight(moistAverage);
   }
 }
@@ -98,6 +104,7 @@ void moistLight (int wetness) {
 void buttonCheck() { 
   static boolean lastSwitch = HIGH; // variable to hold the last button state
   if (digitalRead(SWITCH) == LOW && lastSwitch == HIGH) {
+    delay(1000); // delay to allow device to physically stabilize after button press
     digitalWrite(PROBEPOWER, HIGH);
     long moistLevel = analogRead(MOISTPIN); // take a moisture reading
     digitalWrite(PROBEPOWER, LOW);
