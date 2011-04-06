@@ -1,7 +1,7 @@
 //function for checking soil moisture against threshold
 void moistureCheck() {
   static int counter = 1;//init static counter
-    static int state = MOISTURE_OK; // tracks which messages have been sent
+  static int state = MOISTURE_OK; // tracks which messages have been sent
   int moistAverage = 0; // init soil moisture average
   if((millis() - lastMoistTime) / 1000 > (MOIST_SAMPLE_INTERVAL / MOIST_SAMPLES)) {
     for(int i = MOIST_SAMPLES - 1; i > 0; i--) {
@@ -139,10 +139,19 @@ void buttonCheck() {
       Serial.println("TEST tweet");
       posttweet(message);   // announce to Twitter
       free(message); // free the allocated string memory
+      // show debugging info
+      Serial.println("");
+      Serial.print("ip: ");
+      Serial.println(ip_to_str(EthernetDHCP.ipAddress()));
+      Serial.print("gw: ");
+      Serial.println(ip_to_str(EthernetDHCP.gatewayIpAddress()));
+      Serial.print("dns: ");
+      Serial.println(ip_to_str(EthernetDHCP.dnsIpAddress()));
     }
   }
   lastSwitch = digitalRead(SWITCH); // store the button press state for next time
 }
+
 
 
 
