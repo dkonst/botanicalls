@@ -3,7 +3,7 @@
 // program by Rob Faludi (http://faludi.com) with additional code from various public examples
 // Botanicalls is a project with Kati London, Rob Faludi and Kate Hartman
 
-#define VERSION "3.01a0" // use with 2.1 leaf board hardware
+#define VERSION "3.01b1" // use with 2.1 leaf board hardware
 
 // Your Token to Tweet (get it from http://arduino-tweet.appspot.com/)
 #define TOKEN "14052394-9gYsPnSXTyw0RFVNKMFU14GwNY9RiJXw6Xt3moTkQ"  
@@ -70,13 +70,15 @@ unsigned int counter = 0;
 // initialize Twitter object
 Twitter twitter(TOKEN);
 
+DhcpState ipState = DhcpStateNone; // a variable to store the DHCP state
+
 
 void setup()  { 
   serial = getSerial(); // create or obtain a serial number from EEPROM memory
-   counter = getCounter(); // create or obtain a tweet count from EEPROM memory
+  counter = getCounter(); // create or obtain a tweet count from EEPROM memory
   // Ethernet Shield Settings
   byte mac[] = {  
-    0x02, 0xBC, 0xA1, 0x15, serial >> 8, serial & 0xFF                 }; // create a private MAC address using serial number
+    0x02, 0xBC, 0xA1, 0x15, serial >> 8, serial & 0xFF                         }; // create a private MAC address using serial number
   pinMode(LEDPIN, OUTPUT);
   pinMode(PROBEPOWER, OUTPUT);
   pinMode(MOISTLED, OUTPUT);
@@ -90,7 +92,7 @@ void setup()  {
   digitalWrite(PROBEPOWER, HIGH);
   lastWaterVal = analogRead(MOISTPIN);//take a moisture measurement to initialize watering value
   digitalWrite(PROBEPOWER, LOW);
- 
+
   Serial.begin(9600);   // set the data rate for the hardware serial port
   Serial.println("");   // begin printing to debug output
   Serial.print("Botanicalls v");
@@ -111,53 +113,7 @@ void setup()  {
   // start Ethernet
   EthernetDHCP.begin(mac, true); // start ethernet DHCP in non-blocking polling mode
 
-    DhcpState ipState; // a variable to store the DHCP state
-  static DhcpState prevState = DhcpStateNone;
-
- // wait for vaild IP address to be obtained via DHCP
- while (ipState != DhcpStateLeased && ipState != DhcpStateRenewing) {
-    ipState = EthernetDHCP.poll();
-    if (prevState != ipState) {
-      Serial.println();
-      switch (ipState) {
-      case DhcpStateDiscovering:
-        Serial.print("DHCP disc");
-        break;
-      case DhcpStateRequesting:
-        Serial.print("DHCP req");
-        break;
-      case DhcpStateRenewing:
-        Serial.print("DHCP renew");
-        break;
-      case DhcpStateLeased: 
-        {
-          Serial.println("DHCP OK!");
-
-          // Since we're here, it means that we now have a DHCP lease, so we
-          // print out some information.
-          const byte* ipAddr = EthernetDHCP.ipAddress();
-          const byte* gatewayAddr = EthernetDHCP.gatewayIpAddress();
-          const byte* dnsAddr = EthernetDHCP.dnsIpAddress();
-
-          Serial.print("ip: ");
-          Serial.println(ip_to_str(ipAddr));
-
-          Serial.print("gw: ");
-          Serial.println(ip_to_str(gatewayAddr));
-
-          Serial.print("dns: ");
-          Serial.println(ip_to_str(dnsAddr));
-
-          Serial.println();
-
-          break;
-        }
-      }
-      prevState = ipState;
-    }
-  }
-
-  // blink the comm light with the version number
+    // blink the comm light with the version number
   blinkLED(COMMLED,3,200); // version 3
   delay(200);
   blinkLED(COMMLED,0,200); // point 0
@@ -173,8 +129,13 @@ void loop()       // main loop of the program
   wateringCheck(); // check to see if a watering event has occurred to report it
   buttonCheck(); // check to see if the debugging button is pressed
   analogWrite(COMMLED,0); // douse comm light if it was on
-  if (millis() % 5*60000 == 0) EthernetDHCP.poll(); // maintain DHCP connection no more than once every 5 minutes
+  dhcpCheck(); // check and update DHCP connection
+  if (millis() % 60000 == 0 && ipState != DhcpStateLeased && ipState != DhcpStateRenewing) {
+    blinkLED(COMMLED,1,30); // quick blnk of COMM led if there's no ip address
+  }
 }
+
+
 
 
 

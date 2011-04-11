@@ -22,25 +22,31 @@ void posttweet(char* msg) {
   strcat(message, str4);
   strcat(message, str5);
   Serial.println("connect...");
-  if (twitter.post(message)) { // attempt to tweet the message
-    int status = twitter.wait(); // receive the status
-    digitalWrite(COMMLED,LOW); // turn off the communications LED
-    delay(100);
-    if (status == 200) {
-      Serial.println("tweet ok");
+  if (ipState == DhcpStateLeased || ipState == DhcpStateRenewing) {
+    if (twitter.post(message)) { // attempt to tweet the message
+      int status = twitter.wait(); // receive the status
+      digitalWrite(COMMLED,LOW); // turn off the communications LED
+      delay(100);
+      if (status == 200) {
+        Serial.println("tweet ok");
+      } 
+      else {
+        Serial.print("tweet fail: code ");
+        Serial.println(status); // if tweet fails, print the error code
+        blinkLED(COMMLED,2,100); // ...and blink the communications LED twice
+      }
+      counter++; // iterate the message counter
+      setCounter(counter); // store the message counter in EEPROM memory
     } 
     else {
-      Serial.print("tweet fail: code ");
-      Serial.println(status); // if tweet fails, print the error code
-      blinkLED(COMMLED,2,100); // ...and blink the communications LED twice
-    }
-    counter++; // iterate the message counter
-    setCounter(counter); // store the message counter in EEPROM memory
-  } 
+      Serial.println("connect fail"); // if connection fails entirely,
+      blinkLED(COMMLED,4,100); // ...blink the communications LED 4 times
+    } 
+  }
   else {
-    Serial.println("connect fail"); // if connection fails entirely,
-    blinkLED(COMMLED,4,100); // ...blink the communications LED 4 times
-  } 
+    Serial.println("DHCP fail"); // if connection fails entirely,
+    blinkLED(COMMLED,6,100); // ...blink the communications LED 4 times
+  }
   free(message); // free the allocated string memory
   free(str2);
   free(str4);
@@ -90,6 +96,41 @@ const char* ip_to_str(const uint8_t* ipAddr)
 }
 
 
+// check and attempt to create a DHCP leased IP address
+void dhcpCheck() {
+  DhcpState prevState = ipState; // record the current state
+  ipState = EthernetDHCP.poll(); // poll for an updated state
+  if (prevState != ipState) { // if this is a new state then report it
+    switch (ipState) {
+    case DhcpStateDiscovering:
+      Serial.println("DHCP disc");
+      break;
+    case DhcpStateRequesting:
+      Serial.println("DHCP req");
+      break;
+    case DhcpStateRenewing:
+      Serial.println("DHCP renew");
+      break;
+    case DhcpStateLeased: 
+      {
+        Serial.println("DHCP OK!");
+        // We have a new DHCP lease, so print the info
+        const byte* ipAddr = EthernetDHCP.ipAddress();
+        const byte* gatewayAddr = EthernetDHCP.gatewayIpAddress();
+        const byte* dnsAddr = EthernetDHCP.dnsIpAddress();
+        Serial.print("ip: ");
+        Serial.println(ip_to_str(ipAddr));
+        Serial.print("gw: ");
+        Serial.println(ip_to_str(gatewayAddr));
+        Serial.print("dns: ");
+        Serial.println(ip_to_str(dnsAddr));
+        break;
+      }
+    }
+  }
+} 
+
+
 // this function blinks the an LED light as many times as requested
 void blinkLED(byte targetPin, int numBlinks, int blinkRate) {
   for (int i=0; i<numBlinks; i++) {
@@ -99,5 +140,6 @@ void blinkLED(byte targetPin, int numBlinks, int blinkRate) {
     delay(blinkRate);
   }
 }
+
 
 
