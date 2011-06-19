@@ -1,0 +1,13 @@
+#summary One-sentence summary of this page.
+
+= Instructions=
+
+To learn how to assemble your Botanicalls Kit, start [http://botanicalls.com/kits/getting-started here]:
+
+  * [http://botanicalls.com/kits/getting-started Getting Started]
+  * [http://botanicalls.com/kits/assemble/ Assemble]
+  * [http://botanicalls.com/kits/install/ Install]
+  * [http://botanicalls.com/kits/share/ Share]
+  * [http://botanicalls.com/kits/customize/ Customize]
+
+Don't have a Botanicalls Kit? Find out where to buy one [[http://botanicalls.com/buy here]!
