@@ -3,7 +3,7 @@
 // program by Rob Faludi (http://faludi.com) with additional code from various public examples
 // Botanicalls is a project with Kati London, Rob Faludi and Kate Hartman
 
-#define VERSION "3.01b1" // use with 2.1 leaf board hardware
+#define VERSION "3.01" // use with 2.2 leaf board hardware
 
 // Your Token to Tweet (get it from http://arduino-tweet.appspot.com/)
 #define TOKEN "14052394-9gYsPnSXTyw0RFVNKMFU14GwNY9RiJXw6Xt3moTkQ"  
