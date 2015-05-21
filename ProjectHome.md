@@ -1,0 +1,3 @@
+<a href='http://botanicalls.com'><img src='http://www.botanicalls.com/botanicalls-logo.jpg'>
+
+<p><a href='http://botanicalls.com'>Botanicalls</a> opens a new channel of communication between plants and humans, in an effort to promote successful inter-species understanding. It offers a connection to your leafy pal via online Twitter status updates, with other interaction channels planned. When your plant needs water, it will post to let you know, and send its thanks when you show it love.</p>
